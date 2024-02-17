@@ -1,0 +1,188 @@
+shell 脚本是一种更加复杂度的工具。
+大多数shell都有自己的一套脚本语言,包括变量、控制流和自己的语法。
+创建命令流程(pipelines)、将结果保存到文件、从标准输入中读取输入，这些都是 shell 脚本中的原生操作，这让它比通用的脚本语言更易用。
+
+赋值foo=bar
+访问变量中储存的数值$foo
+foo=bar 不能用空格分隔
+因为解释器会调用程序foo 并将 = 和 bar作为参数。
+空格会分割参数导致混淆
+
+foo=bar
+echo "$foo"
+#打印bar
+echo '$foo'
+#打印$foo
+
+vim 进入编辑器编辑函数
+vim mcd.sh
+bash也支持if, case, while 和 for 这些控制流关键字。同样地， bash 也支持函数，它可以接受参数并基于参数进行操作。
+mcd () {
+    mkdir -p "$1"
+    cd "$1"
+}
+
+与其他脚本语言不同的是,bash使用了很多特殊的变量来表示参数、错误代码和相关变量。
+$0 - 脚本名
+$1 到 $9 - 脚本的参数。 $1 是第一个参数，依此类推。
+$@ - 所有参数
+$# - 参数个数
+$? - 前一个命令的返回值(错误提示)
+$$ - 当前脚本的进程识别码
+!! - 完整的上一条命令，包括参数。常见应用：当你因为权限不足执行命令失败时，可以使用 sudo !!再尝试一次。
+$_ - 上一条命令的最后一个参数。如果你正在使用的是交互式 shell,你可以通过按下 Esc 之后键入 . 来获取这个值。
+
+命令通常使用 STDOUT来返回输出值,使用STDERR 来返回错误及错误码，便于脚本以更加友好的方式报告错误。
+返回码或退出状态是脚本/命令之间交流执行状态的方式。
+echo $?
+返回值0表示正常执行,其他所有非0的返回值都表示有错误发生。
+
+退出码可以搭配 &&（与操作符）和 ||（或操作符）使用，用来进行条件判断，决定是否执行其他程序。
+它们都属于短路运算符（short-circuiting） 同一行的多个命令可以用 ; 分隔。
+程序 true 的返回码永远是0，false 的返回码永远是1。
+
+|| 表示前者错误才可以完成后者
+
+false || echo "Oops, fail"
+# Oops, fail
+
+true || echo "Will not be printed"
+#
+
+&& 表示前者正确才可以完成后者
+
+true && echo "Things went well"
+# Things went well
+
+false && echo "Will not be printed"
+#
+
+； 表示前者无论怎样都会完成后者
+
+false ; echo "This will always run"
+# This will always run
+
+引用单个字符 ls project?
+引用两个字符 ls project??
+
+
+命令替换
+一个常见的模式是以变量的形式获取一个命令的输出，这可以通过 命令替换（command substitution）实现。
+当您通过 $( CMD ) 这样的方式来执行CMD 这个命令时，它的输出结果会替换掉 $( CMD ) 。
+
+进程替换
+<( CMD ) 会执行 CMD 并将结果输出到一个临时文件中，并将 <( CMD ) 替换成临时文件名。
+diff <(ls foo) <(ls bar) 会显示文件夹 foo 和 bar 中文件的区别。
+
+例子：
+#!/bin/bash
+
+echo "Starting program at $(date)" # date会被替换成日期和时间
+
+echo "Running program $0 with $# arguments with pid $$"
+
+for file in "$@"; do
+    grep foobar "$file" > /dev/null 2> /dev/null
+    # 如果模式没有找到，则grep退出状态为 1
+    # 我们将标准输出流和标准错误流重定向到Null，因为我们并不关心这些信息
+    if [[ $? -ne 0 ]]; then
+        echo "File $file does not have any foobar, adding one"
+        echo "# foobar" >> "$file"
+    fi
+done
+
+比较时通常使用[[]]
+-ne 表示不等于
+
+bash可以基于文件扩展名展开表达式。这一技术被称为shell的 通配（globbing）
+通配符:
+foo*  foo?  foo??
+rm *foo*
+花括号：
+当你有一系列的指令，其中包含一段公共子串时，可以用花括号来自动展开这些命令。这在批量移动或转换文件时非常方便
+#!/bin/bash
+
+echo "Starting program at $(date)" # date会被替换成日期和时间
+
+echo "Running program $0 with $# arguments with pid $$"
+
+for file in "$@"; do
+    grep foobar "$file" > /dev/null 2> /dev/null
+    # 如果模式没有找到，则grep退出状态为 1
+    # 我们将标准输出流和标准错误流重定向到Null，因为我们并不关心这些信息
+    if [[ $? -ne 0 ]]; then
+        echo "File $file does not have any foobar, adding one"
+        echo "# foobar" >> "$file"
+    fi
+done
+在条件语句中，我们比较 $? 是否等于0。 Bash实现了许多类似的比较操作，您可以查看 test 手册。 在bash中进行比较时，尽量使用双方括号 [[ ]] 而不是单方括号 [ ]，这样会降低犯错的几率，尽管这样并不能兼容 sh。 更详细的说明参见这里。
+
+当执行脚本时，我们经常需要提供形式类似的参数。bash使我们可以轻松的实现这一操作，它可以基于文件扩展名展开表达式。这一技术被称为shell的 通配（globbing）
+
+通配符 - 当你想要利用通配符进行匹配时，你可以分别使用 ? 和 * 来匹配一个或任意个字符。例如，对于文件foo, foo1, foo2, foo10 和 bar, rm foo?这条命令会删除foo1 和 foo2 ，而rm foo* 则会删除除了bar之外的所有文件。
+花括号{} - 当你有一系列的指令，其中包含一段公共子串时，可以用花括号来自动展开这些命令。这在批量移动或转换文件时非常方便。
+convert image.{png,jpg}
+# 会展开为
+convert image.png image.jpg
+
+cp /path/to/project/{foo,bar,baz}.sh /newpath
+# 会展开为
+cp /path/to/project/foo.sh /path/to/project/bar.sh /path/to/project/baz.sh /newpath
+
+# 也可以结合通配使用
+mv *{.py,.sh} folder
+# 会移动所有 *.py 和 *.sh 文件
+
+mkdir foo bar
+
+# 下面命令会创建foo/a, foo/b, ... foo/h, bar/a, bar/b, ... bar/h这些文件
+touch {foo,bar}/{a..h}
+touch foo/x bar/y
+# 比较文件夹 foo 和 bar 中包含文件的不同
+diff <(ls foo) <(ls bar)
+# 输出
+# < x
+# ---
+# > y
+
+shellcheck 这样的工具可以帮助你定位sh/bash脚本中的错误。
+
+#!/usr/local/bin/python
+import sys
+for arg in reversed(sys.argv[1:]):
+    print(arg)
+内核知道去用 python 解释器而不是 shell 命令来运行这段脚本，是因为脚本的开头第一行的 shebang。
+shebang ☞ #！
+在 shebang 行中使用 env 命令是一种好的实践，它会利用环境变量中的程序来解析该脚本，这样就提高来您的脚本的可移植性。
+例如，使用了env的shebang看上去时这样的#!/usr/bin/env python。
+
+注：
+函数只能与shell使用相同的语言，脚本可以使用任意语言。因此在脚本中包含 shebang 是很重要的。
+函数会在当前的shell环境中执行，脚本会在单独的进程中执行。因此，函数可以对环境变量进行更改，比如改变当前工作目录，脚本则不行。脚本需要使用 export 将环境变量导出，并将值传递给环境变量。
+
+
+tldr 简洁介绍
+例如：常常在tldr上搜索tar 和 ffmpeg 的用法。
+convert 转换图片格式
+ffmpeg 转换视频
+
+找到之前输入过的某条命令
+按向上的方向键会显示你使用过的上一条命令
+继续按上键则会遍历整个历史记录
+
+history 命令允许您以程序员的方式来访问shell中输入的历史命令
+history | grep find 会打印包含find子串的命令。
+对于大多数的shell来说，您可以使用 Ctrl+R 对命令历史记录进行回溯搜索。敲 Ctrl+R 后您可以输入子串来进行匹配，查找历史命令行。
+
+在 zsh 中，使用方向键上或下也可以完成这项工作。
+
+Ctrl+R 可以配合 fzf 使用。fzf 是一个通用对模糊查找工具，它可以和很多命令一起使用。这里我们可以对历史命令进行模糊查找并将结果以赏心悦目的格式输出。
+
+
+高效地在目录间随意切换
+使用fasd和 autojump 这两个工具来查找最常用或最近使用的文件和目录。
+Fasd 基于 frecency 对文件和文件排序，也就是说它会同时针对频率（frequency）和时效（recency）进行排序。
+fasd使用命令 z 帮助我们快速切换到最常访问的目录。、
+如果您经常访问/home/user/files/cool_project 目录，那么可以直接使用 z cool 跳转到该目录。对于 autojump，则使用j cool代替即可。
+
+还有一些更复杂的工具可以用来概览目录结构，例如 tree, broot 或更加完整的文件管理器，例如 nnn 或 ranger。

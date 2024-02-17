@@ -1,0 +1,216 @@
+基础命令
+
+使用bash脚本
+ctrl + L 清除终端并回到顶部
+date 一个日期程序
+
+$ 代表不是root用户
+# 代表是root用户
+~ 代表当前所在位置是“home”
+
+echo 将参数打印出来
+echo 输出的内容
+"hello world"
+'hello world'
+hello\ world(?)
+
+反引号 ``
+echo pwd 结果是pwd
+被反引号包围的会被作为命令去执行
+
+$PATH 搜索由：所分割的一系列目录 ，找到程序便执行
+which 知道具体程序，可直接找并执行
+which echo
+
+/代表根目录
+/home/threetu
+绝对路径前面有/
+相对路径是相对当前工作目录的路径
+. 代表当前目录
+.. 代表上级目录
+
+pwd 获取当前工作目录
+cd 切换目录
+cd ./home
+cd ../../home
+cd /
+
+ls 查看当前目录下包含哪些文件
+-a 所有文件
+-h --help 打印帮助信息
+ls --help
+同时使用-l -a
+ls -l -a 
+ls -la
+ls -al
+ls -lh /
+
+-l use a long listing format 
+ls -l /home
+运行结果：drwxr-xr-x 1 missing  users  4096 Jun 15  2019 missing
+本行第一个字符 d 表示 missing 是一个目录。然后接下来的九个字符，每三个字符构成一组。 （rwx）. 它们分别代表了文件所有者（missing），用户组（users） 以及其他所有人具有的权限。其中 - 表示该用户不具备相应的权限。从上面的信息来看，只有文件所有者可以修改（w），missing 文件夹 （例如，添加或删除文件夹中的文件）。为了进入某个文件夹，用户需要具备该文件夹以及其父文件夹的“搜索”权限（以“可执行”：x）权限表示。为了列出它的包含的内容，用户必须对该文件夹具备读权限（r）。对于文件来说，权限的意义也是类似的。
+
+touch Linux路径 
+用来创建文件
+touch test.txt
+
+cat 查看文件内容
+cat linux路径
+cat test.txt
+
+more linux路径
+more 可以翻页，一页一页展示
+cat直接将内容全部展示出来
+more在查看过程中，通过空格翻页，q退出
+
+mv 移动文件or文件夹or改名
+mv linux路径（被移动的文件or文件夹） linux路径（移动去的地方）
+mv test.txt Desktop/
+mv test2.txt test3.txt
+由于test3.txt不存在，所以有了改名效果 
+mv test Desktop/
+
+cp 复制文件文件夹
+cp [-r] linux路径（被复制的文件or文件夹） linux路径（复制去的位置）
+-r 复制文件夹使用
+cp test.txt test2.txt
+cp [-r] itheima itheima2
+
+mkdir [-p] linux路径
+-p 可创建未存在的父目录
+mkdir itheima
+mkdir /home/itheima/test
+mkdir ./test2
+mkdir ~/test3
+（确保操作在home内，不然涉及权限问题sudo）
+
+rm 删除文件 （危险的命令）
+rm [-r -f] 无限参数（被删除的文件和文件夹，空格隔开）
+-r 删除文件夹
+-f 强制删除 （不会弹出提示信息）（root才会用到，一般用户不会提示）
+rm test3.txt
+
+通配符 * 用来匹配任意的内容
+test*，表示匹配以任何test开头的内容
+*test，表示匹配以任何test结尾的内容
+*test*表示任何包含test 的内容
+rm -r *test*
+rm -rf /* （切换到管理员时，相当于把C盘格式化）
+
+命令的本体是一个个二进制的可执行程序
+which 查看所使用的一系列命令的程序文件存放在哪里(查找命令)
+which cd
+which touch
+which pwd
+
+find 按文件名查找文件
+find 起始路径 -name "被查找文件名"
+find / -name "test"
+find / -name "*test*"
+如果您希望模式匹配时是不区分大小写，可以使用-iname选项
+find 起始路径 -size +|-n[kMG]
++,-表示大于和小于
+n表示大小数字
+k，M，G表示大小单位（kb，MB,GB）
+find / -size -10k
+find / -size +100M 
+有许多满足的一直在显示，CTRL+C强行停止
+
+find拓展：
+# 查找所有名称为src的文件夹
+find . -name src -type d
+# 查找所有文件夹路径中包含test的python文件
+find . -path '*/test/*.py' -type f
+# 查找前一天修改的所有文件
+find . -mtime -1
+# 查找所有大小在500k至10M的tar.gz文件
+find . -size +500k -size -10M -name '*.tar.gz'
+
+find 还能对所有查找到的文件进行操作。这能极大地简化一些单调的任务。
+# 删除全部扩展名为.tmp 的文件
+find . -name '*.tmp' -exec rm {} \;
+# 查找全部的 PNG 文件并将其转换为 JPG
+find . -name '*.png' -exec convert {} {}.jpg \;
+
+fd 就是一个更简单、更快速、更友好的程序，它可以用来作为find的替代品。它有很多不错的默认设置，例如输出着色、默认支持正则匹配、支持unicode并且我认为它的语法更符合直觉。
+
+不要每次都搜索文件而是通过编译索引或建立数据库的方式来实现更加快速地搜索。
+更高效：
+locate 使用一个由 updatedb负责更新的数据库，在大多数系统中 updatedb 都会通过 cron 每日更新。
+
+grep 通过关键字过滤文件行
+grep [-n] 关键字 文件路径
+-n 表示在结果中显示匹配的行的行号
+关键字 用""包起来
+grep "itheima" test.txt
+
+grep拓展：
+-C ：获取查找结果的上下文（Context）
+-v 将对结果进行反选（Invert），也就是输出不匹配的结果
+grep -C 5 会输出匹配结果前后五行
+当需要搜索大量文件的时候，使用 -R 会递归地进入子目录并搜索所有的文本文件。
+
+ack, ag 和 rg：grep -R的替代品
+# 查找所有使用了 requests 库的文件
+rg -t py 'import requests'
+# 查找所有没有写 shebang 的文件（包含隐藏文件）
+rg -u --files-without-match "^#!"
+# 查找所有的foo字符串，并打印其之后的5行
+rg foo -A 5
+# 打印匹配的统计信息（匹配的行和文件的数量）
+rg --stats PATTERN
+
+wc 统计文件的行数，单词数量
+wc [-c -m -l -w] 文件路径
+-c 统计bytes数量
+-m 统计字符数量
+-l 统计行数
+-w 统计单词数量
+wc 直接用 结果：行数+单词数+字节数
+
+| 管道符 将左边命令的结果作为右边命令的输入
+grep itheima test.txt
+cat test.txt | grep itheima
+cat test.txt | wc -l
+ls | grep test
+ls -l /user/bin | grep gtf
+ls -l /user/bin | wc -l
+cat test.txt | grep itcast | grep itheima
+
+man 展示文档（用户手册）
+man ls
+
+重定向符
+< file  输入
+> file  输出（将左边的结果写入右边的文件）（覆盖）
+echo hello > hello.txt
+cat hello.txt
+cat < hello.txt
+cat < hello.txt > hello2.txt
+cat hello2.txt
+>> 向文件追加内容（追加）
+echo "hello world" >> test.txt
+原有结果不变，追加新的内容
+ls > test.txt
+
+tail 查看文件尾部的内容，跟踪文件的最新更改
+tail [-f -num] Linux路径
+Linux路径 表示被跟踪的文件路径
+-f 表示持续追踪
+-num 表示查看尾部多少行
+tail test.txt (查看尾部内容，默认十行)
+tail -5 test.txt
+tail -f test.txt(自动追踪内容，两个主机时，一个输入另一边会显示)
+CTRL + C可以强行停止命令的运行
+
+| 将一个程序的输出和另外一个程序的输入连接起来
+ls -l / | tail -n1
+curl --head --silent google.com | grep --ignore-case content-length | cut --delimiter=' ' -f2
+
+sudo su 改用root用户
+su -root 改用root用户
+exit 退出root用户
+root用户以#开头
+sudo 使用root命令
+$ echo 3 | sudo tee brightness
+tee程序完全拥有root权限，可以写入
